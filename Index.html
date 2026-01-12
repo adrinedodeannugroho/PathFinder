@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder - Temukan Jurusanmu</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    
+    <nav class="top-nav">
+        <div class="logo">PathFinder</div>
+        <button class="nav-link" onclick="window.location.href='admin.html'">Masuk sebagai Admin</button>
+    </nav>
+
+    <main class="container">
+        
+        <section id="dashboard-home" class="active">
+            <div class="card glass-effect hero-container">
+                <h1 class="logo-large">PathFinder</h1>
+                
+                <div class="content-box" style="text-align: left; margin-bottom: 25px;">
+                    <h3 style="color: #3498db;">Apa itu PathFinder?</h3>
+                    <p>PathFinder adalah platform navigasi akademik cerdas yang dirancang untuk membantu Anda menemukan jalur pendidikan yang paling sesuai. Menggunakan pendekatan analisis minat, kami memetakan kepribadian dan kecenderungan Anda ke dalam berbagai rumpun ilmu universitas secara akurat.</p>
+                    
+                    <h3 style="color: #3498db; margin-top: 20px;">Tujuan Kami</h3>
+                    <p>Kami hadir untuk menjawab keresahan fenomena <strong>"salah jurusan"</strong> yang sering dialami mahasiswa. Tujuan kami adalah memberikan gambaran yang transparan mengenai potensi diri Anda, sehingga Anda dapat memilih jurusan kuliah dengan keyakinan penuh dan memahami prospek karir yang menanti di masa depan.</p>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item"><span>🎯</span><p>Pemetaan Minat</p></div>
+                    <div class="info-item"><span>📊</span><p>Analisis Karakter</p></div>
+                    <div class="info-item"><span>🚀</span><p>Visi Karir</p></div>
+                </div>
+
+                <button class="btn-primary main-btn" onclick="userApp.showIdentityScreen()">
+                    🚀 Mulai Perjalanan Anda
+                </button>
+            </div>
+        </section>
+
+        <section id="identity-screen" class="hidden">
+            <div class="card glass-effect identity-box">
+                <h2>Persiapan Analisis</h2>
+                <p>Silakan masukkan Anda untuk memulai proses pemetaan jurusan.</p>
+                
+                <div class="input-group">
+                    <label>Nama Lengkap/Panggilan</label>
+                    <input type="text" id="username" placeholder="Masukkan nama Anda...">
+                    <span class="error-msg" id="name-error" style="display: none; color: #ff7675;">Nama wajib diisi ya!</span>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-outline" onclick="userApp.backToHome()">Kembali</button>
+                    <button class="btn-primary" onclick="userApp.startQuiz()">Mulai Tes Sekarang</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="quiz-screen" class="hidden">
+            <div class="header-quiz">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span id="question-count">Loading...</span>
+            </div>
+            <div class="card question-card">
+                <h2 id="question-text">...</h2>
+                <div class="options-container" id="options-container"></div>
+            </div>
+        </section>
+
+        <div id="confirm-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3>Konfirmasi Pilihan</h3>
+                <p>Apakah Anda yakin dengan jawaban ini?</p>
+                <div class="modal-buttons">
+                    <button class="btn-outline" onclick="userApp.cancelAnswer()">Tidak</button>
+                    <button class="btn-primary" onclick="userApp.confirmAnswer()">Yakin</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="summary-screen" class="hidden">
+            <div class="card glass-effect">
+                <h2 style="text-align: center;">Rangkuman Jawaban</h2>
+                <p style="text-align: center;">Halo <strong><span id="summary-name"></span></strong>, berikut adalah pilihan yang telah Anda ambil:</p>
+                
+                <div id="user-summary-list" style="margin: 25px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; border: 1px solid #ddd; max-height: 350px; overflow-y: auto;">
+                    </div>
+
+                <button class="btn-primary" style="width: 100%;" onclick="userApp.showFinalResult()">
+                    Lihat Hasil Rekomendasi ➔
+                </button>
+            </div>
+        </section>
+
+        <section id="result-screen" class="hidden">
+            <div class="card result-card" id="print-area" style="background: white; padding: 30px; border-radius: 15px; color: #333;">
+                <h3>Hasil Analisis PathFinder</h3>
+                <p>Berdasarkan jawaban Anda, Anda memiliki kecocokan tinggi pada:</p>
+                
+                <div class="major-result-box" style="background: #f0f7ff; padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 2px solid #3498db;">
+                    <div class="icon-major" style="font-size: 50px;">🎓</div>
+                    <h1 id="major-name" style="color: #2c3e50; margin: 10px 0;">Jurusan</h1>
+                    <p id="major-desc" style="font-weight: bold; color: #3498db;">Kategori</p>
+                </div>
+
+                <div class="career-section">
+                    <h4>Prospek Karir Masa Depan</h4>
+                    <div id="career-list-container"></div>
+                </div>
+
+                <div class="feedback-section" data-html2canvas-ignore="true">
+                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                    <p>Simpan hasil analisis Anda:</p>
+                    <div class="btn-row">
+                        <button class="btn-outline" onclick="exportManager.downloadImage()">📸 Simpan JPG</button>
+                        <button class="btn-outline" onclick="exportManager.downloadPDF()">📄 Simpan PDF</button>
+                    </div>
+                    <br>
+                    <button class="btn-primary" style="width: 100%;" onclick="location.reload()">Selesai & Keluar</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="data.js"></script> 
+    <script src="user.js"></script> 
+</body>
+</html>

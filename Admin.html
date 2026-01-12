@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        
+        /* Dibuat dan direvisi oleh: Suud Nofa Setia Mahdani 24SA11A151 */
+        :root { --primary: #3498db; --danger: #ff7675; }
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; background: #f1f1f1; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        .add-question-box { background: #f9f9f9; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #eee; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        th { background: #f4f7f6; color: #636e72; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: #e0e0e0; }
+        .btn-logout { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: transform 0.2s;
+            border-radius: 4px;
+        }
+        .action-btn:hover { background-color: #eee; transform: scale(1.1); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav" style="background: #2d3436; display: flex; justify-content: space-between; align-items: center; padding: 10px 5%;">
+        <div class="logo" style="color:white; font-weight: bold;">PathFinder Admin</div>
+        <div class="nav-actions" style="display: flex; gap: 10px; align-items: center;">
+            <button class="tab-btn" style="background: #444; color: white; font-size: 0.8rem; border: 1px solid #666;" onclick="window.location.href='index.html'">Masuk sebagai User</button>
+            <button class="btn-logout" id="logout-btn" style="display: none;" onclick="location.reload()">Keluar</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="login-screen" class="active">
+            <div class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
+                <h2>Login Admin</h2>
+                <p style="font-size: 0.9rem; color: #636e72;">Masukkan kredensial untuk akses dashboard.</p>
+                
+                <div class="input-group" style="text-align: left; margin-top: 20px;">
+                    <label>Username</label>
+                    <input type="text" id="admin-user" placeholder="Masukkan Username">
+                </div>
+
+                <div class="input-group" style="text-align: left; margin-top: 15px; margin-bottom: 25px;"> 
+                    <label>Password</label>
+                    <input type="password" id="admin-pass" placeholder="******">
+                </div>
+                
+                <button class="btn-primary" style="width: 100%;" onclick="adminApp.login()">Masuk sebagai Admin</button>
+            </div>
+        </section>
+
+        <section id="dashboard-screen" class="hidden">
+            <div class="card dashboard-card">
+                <div class="admin-tabs">
+                    <button id="btn-tab-users" class="tab-btn active" onclick="adminApp.switchTab('users', event)">Data Hasil Tes</button>
+                    <button id="btn-tab-questions" class="tab-btn" onclick="adminApp.switchTab('questions', event)">Manage Soal</button>
+                </div>
+
+                <div id="tab-users" class="tab-content active">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Nama Pengguna</th>
+                                    <th>Rekomendasi</th>
+                                    <th>Aksi</th> 
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body">
+                                <tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-questions" class="tab-content">
+                    <div class="add-question-box">
+                        <h4 style="margin-top: 0;">Tambah Pertanyaan Analisis</h4>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" id="new-q-text" placeholder="Masukkan teks pertanyaan..." style="flex: 2; min-width: 250px;">
+                            <select id="new-q-type" style="flex: 1; min-width: 150px;">
+                                <option value="TECH">Teknologi (TECH)</option>
+                                <option value="COMM">Komunikasi (COMM)</option>
+                                <option value="BIZ">Bisnis (BIZ)</option>
+                                <option value="HEALTH">Kesehatan (HEALTH)</option>
+                                <option value="SPATIAL">Spasial/Seni (SPATIAL)</option>
+                            </select>
+                            <button class="btn-primary" onclick="adminApp.addQuestion()">Simpan</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="50">ID</th>
+                                    <th>Teks Pertanyaan</th>
+                                    <th width="120">Kategori</th>
+                                    <th width="100">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="question-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="admin.js"></script>
+    
+    <script>
+        const originalLogin = adminApp.login;
+        adminApp.login = function() {
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+            if (u === 'Midae' && p === '135246') {
+                document.getElementById('logout-btn').style.display = 'block';
+            }
+            originalLogin.apply(this, arguments);
+        };
+    </script>
+</body>
+</html>
