@@ -1,5 +1,6 @@
-const API_URL = 'http://localhost:3000/api';
-    // Dibuat oleh: Miza 24SA11A132 & direvisi oleh: Adrinedo 24SA11A148
+const API_URL = 'https://pathfinder-ochre-kappa.vercel.app/api';
+
+// Dibuat oleh: Miza 24SA11A132 & direvisi oleh: Adrinedo 24SA11A148
 const userApp = {
     questions: [],
     currentStep: 0,
@@ -36,8 +37,13 @@ const userApp = {
         this.userName = input.value.trim();
         if (nameError) nameError.style.display = 'none';
 
+        // Tampilkan loading jika perlu
+        console.log("Menghubungkan ke database Aiven melalui Vercel...");
+
         try {
             const response = await fetch(`${API_URL}/questions`);
+            if (!response.ok) throw new Error("Gagal mengambil data dari server");
+            
             this.questions = await response.json();
 
             if (!this.questions || this.questions.length === 0) {
@@ -53,7 +59,7 @@ const userApp = {
             this.renderQuestion();
         } catch (error) {
             console.error("Error Koneksi:", error);
-            alert("Gagal koneksi ke Server! Pastikan backend Node.js Anda berjalan.");
+            alert("Gagal koneksi ke Server! Pastikan database Aiven Anda aktif dan konfigurasi Vercel sudah benar.");
         }
     },
 
@@ -124,7 +130,7 @@ const userApp = {
             this.scores[category] += points;
         }
 
-        // SINKRONISASI DENGAN SERVER.JS:
+        // Simpan tracking untuk dikirim ke tabel user_answers
         this.userAnswersTracking.push({
             q_id: q_id,
             question: question,
@@ -187,9 +193,9 @@ const userApp = {
         resultScreen.classList.remove('hidden');
         resultScreen.classList.add('active');
 
-        // KIRIM DATA KE DATABASE
+        // KIRIM DATA KE DATABASE AIVEN MELALUI VERCEL
         try {
-            await fetch(`${API_URL}/users`, {
+            const response = await fetch(`${API_URL}/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -199,6 +205,10 @@ const userApp = {
                     answers: this.userAnswersTracking
                 })
             });
+            
+            if (response.ok) {
+                console.log("✅ Data berhasil disimpan ke Aiven!");
+            }
         } catch (e) { 
             console.error("Gagal mengirim data hasil ke server:", e); 
         }
@@ -215,10 +225,11 @@ const userApp = {
     }
 };
 
-// EKSPOR DATA
+// EKSPOR DATA (PDF & IMAGE)
 const exportManager = {
     downloadImage: function() {
         const area = document.getElementById('print-area');
+        if(!area) return;
         html2canvas(area, { backgroundColor: "#ffffff", scale: 2, useCORS: true }).then(canvas => {
             const link = document.createElement('a');
             link.download = `PathFinder_${userApp.userName}.jpg`;
@@ -229,6 +240,7 @@ const exportManager = {
     downloadPDF: function() {
         const { jsPDF } = window.jspdf;
         const area = document.getElementById('print-area');
+        if(!area) return;
         html2canvas(area, { scale: 2, useCORS: true }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');

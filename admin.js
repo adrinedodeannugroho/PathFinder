@@ -1,6 +1,8 @@
 const adminApp = {
-    API_URL: 'http://localhost:3000/api',
+    API_URL: 'https://pathfinder-ochre-kappa.vercel.app/api',
+    
     /* Dibuat oleh: Suud Nofa 24SA11A151 & direvisi oleh: Adinedo 24SA11A148 */
+    
     // SISTEM LOGIN
     login: function() {
         const u = document.getElementById('admin-user').value.trim();
@@ -34,7 +36,6 @@ const adminApp = {
                 return;
             }
 
-            // Membangun konten HTML untuk jendela baru
             let reportHTML = `
                 <html>
                 <head>
@@ -60,8 +61,8 @@ const adminApp = {
             `;
 
             answers.forEach((item, index) => {
-                const q = item.question_text || item.TEXT || "Pertanyaan tidak ditemukan";
-                const a = item.selected_option || item.answer || "Tidak ada jawaban";
+                const q = item.question_text || "Pertanyaan tidak ditemukan";
+                const a = item.selected_option || "Tidak ada jawaban";
                 reportHTML += `
                     <div class="item">
                         <div class="question">${index + 1}. ${q}</div>
@@ -77,14 +78,13 @@ const adminApp = {
                 </html>
             `;
 
-            // MEMBUKA JENDELA BARU (Pop-up)
             const win = window.open("", "_blank", "width=600,height=800,scrollbars=yes");
             win.document.write(reportHTML);
             win.document.close();
 
         } catch (e) {
             console.error("Gagal mengambil detail:", e);
-            alert("Gagal menyambung ke server.");
+            alert("Gagal menyambung ke server database.");
         }
     },
 
@@ -95,7 +95,10 @@ const adminApp = {
             const sortedData = await r.json(); 
 
             const container = document.getElementById('user-table-body');
+            if (!container) return;
+
             container.innerHTML = sortedData.map(u => {
+                // Escape quotes untuk data JSON di HTML agar tidak error
                 const userJson = JSON.stringify(u).replace(/"/g, '&quot;');
                 
                 return `
@@ -117,8 +120,8 @@ const adminApp = {
     deleteUser: async function(id) {
         if(confirm('Hapus data user ini secara permanen?')) {
             try {
-                await fetch(`${this.API_URL}/users/${id}`, { method: 'DELETE' });
-                this.renderUserTable();
+                const res = await fetch(`${this.API_URL}/users/${id}`, { method: 'DELETE' });
+                if(res.ok) this.renderUserTable();
             } catch (e) {
                 alert("Gagal menghapus user.");
             }
@@ -131,10 +134,11 @@ const adminApp = {
             const r = await fetch(`${this.API_URL}/questions`);
             const d = await r.json();
             const container = document.getElementById('question-table-body');
+            if (!container) return;
             
             container.innerHTML = d.map(q => {
-                const text = q.TEXT || q.text || "";
-                const type = q.TYPE || q.type || "";
+                const text = q.TEXT || "";
+                const type = q.TYPE || "";
                 
                 return `
                 <tr>
@@ -161,13 +165,15 @@ const adminApp = {
         if (!t) return alert('Isi teks pertanyaan!');
 
         try {
-            await fetch(`${this.API_URL}/questions`, {
+            const res = await fetch(`${this.API_URL}/questions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ TEXT: t, TYPE: y })
             });
-            textEl.value = ''; 
-            this.renderQuestionTable();
+            if(res.ok) {
+                textEl.value = ''; 
+                this.renderQuestionTable();
+            }
         } catch (e) {
             alert("Gagal menambah soal.");
         }
@@ -179,12 +185,12 @@ const adminApp = {
         
         if (nT !== null && nY !== null) {
             try {
-                await fetch(`${this.API_URL}/questions/${id}`, {
+                const res = await fetch(`${this.API_URL}/questions/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ TEXT: nT, TYPE: nY.toUpperCase() })
                 });
-                this.renderQuestionTable();
+                if(res.ok) this.renderQuestionTable();
             } catch (e) {
                 alert("Gagal mengupdate soal.");
             }
@@ -194,10 +200,10 @@ const adminApp = {
     deleteQuestion: async function(id) {
         if(confirm('Hapus soal ini?')) {
             try {
-                await fetch(`${this.API_URL}/questions/${id}`, { 
+                const res = await fetch(`${this.API_URL}/questions/${id}`, { 
                     method: 'DELETE' 
                 });
-                this.renderQuestionTable();
+                if(res.ok) this.renderQuestionTable();
             } catch (e) {
                 console.error("Gagal menghapus:", e);
                 alert("Gagal menghapus soal.");

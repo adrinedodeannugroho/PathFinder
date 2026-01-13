@@ -6,20 +6,39 @@ const mysql = require('mysql2/promise');
 const cors = require('cors'); 
 const app = express();
 
+// Konfigurasi CORS agar bisa diakses dari domain Vercel
 app.use(cors()); 
 app.use(express.json());
+
 const PORT = process.env.PORT || 3000;
 
+// Konfigurasi Pool Koneksi untuk Aiven Cloud
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: 'db_pathfinder', 
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || 'defaultdb', 
+    port: process.env.DB_PORT || 26592,           
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: false 
+    }
 });
-// Simpan Riwayat + Detail Jawaban
+
+// Middleware untuk cek koneksi database saat server start 
+pool.getConnection()
+    .then(conn => {
+        console.log("✅ Berhasil terhubung ke Database Aiven!");
+        conn.release();
+    })
+    .catch(err => {
+        console.error("❌ Gagal koneksi database:", err.message);
+    });
+
+// API ENDPOINTS
+
 app.post('/api/users', async (req, res) => {
     const { NAME, result, category, answers } = req.body; 
     let connection;
@@ -128,6 +147,7 @@ app.delete('/api/questions/:id', async (req, res) => {
         res.status(500).json({ success: false, message: err.message }); 
     }
 });
+
 app.listen(PORT, () => {
-    console.log(`🚀 Server Berjalan di http://localhost:${PORT}`);
+    console.log(`🚀 Server Berjalan di Port: ${PORT}`);
 });
