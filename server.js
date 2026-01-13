@@ -6,7 +6,6 @@ const mysql = require('mysql2/promise');
 const cors = require('cors'); 
 const app = express();
 
-// Konfigurasi CORS agar bisa diakses dari domain Vercel
 app.use(cors()); 
 app.use(express.json());
 
@@ -27,7 +26,7 @@ const pool = mysql.createPool({
     }
 });
 
-// Middleware untuk cek koneksi database saat server start 
+// Cek koneksi database
 pool.getConnection()
     .then(conn => {
         console.log("✅ Berhasil terhubung ke Database Aiven!");
@@ -38,7 +37,6 @@ pool.getConnection()
     });
 
 // API ENDPOINTS
-
 app.post('/api/users', async (req, res) => {
     const { NAME, result, category, answers } = req.body; 
     let connection;
@@ -47,7 +45,7 @@ app.post('/api/users', async (req, res) => {
         await connection.beginTransaction(); 
 
         const [userResult] = await connection.execute(
-            'INSERT INTO users (NAME, result, category, DATE) VALUES (?, ?, ?, NOW())',
+            'INSERT INTO Users (NAME, result, category, DATE) VALUES (?, ?, ?, NOW())',
             [NAME, result, category]
         );
         const userId = userResult.insertId;
@@ -61,7 +59,7 @@ app.post('/api/users', async (req, res) => {
             ]);
 
             await connection.query(
-                'INSERT INTO user_answers (user_id, question_id, question_text, selected_option) VALUES ?',
+                'INSERT INTO User_answers (user_id, question_id, question_text, selected_option) VALUES ?',
                 [answerValues]
             );
         }
@@ -76,11 +74,10 @@ app.post('/api/users', async (req, res) => {
         if (connection) connection.release();
     }
 });
-
 app.get('/api/user-answers/:userId', async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            'SELECT question_text, selected_option FROM user_answers WHERE user_id = ?', 
+            'SELECT question_text, selected_option FROM User_answers WHERE user_id = ?', 
             [req.params.userId]
         );
         res.json(rows);
@@ -88,21 +85,27 @@ app.get('/api/user-answers/:userId', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
-
-app.delete('/api/users/:id', async (req, res) => {
+app.get('/api/questions', async (req, res) => {
     try {
-        await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        const [rows] = await pool.execute('SELECT * FROM Questions ORDER BY id ASC');
+        res.json(rows);
+    } catch (err) { 
+        res.status(500).json({ success: false, message: err.message }); 
     }
 });
-
+app.get('/api/users', async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT * FROM Users ORDER BY DATE DESC');
+        res.json(rows);
+    } catch (err) { 
+        res.status(500).json({ success: false, message: err.message }); 
+    }
+});
 app.put('/api/questions/:id', async (req, res) => {
     const { TEXT, TYPE } = req.body;
     try {
         await pool.execute(
-            'UPDATE questions SET TEXT = ?, TYPE = ? WHERE id = ?',
+            'UPDATE Questions SET TEXT = ?, TYPE = ? WHERE id = ?',
             [TEXT, TYPE, req.params.id]
         );
         res.json({ success: true });
@@ -110,38 +113,26 @@ app.put('/api/questions/:id', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
-
 app.post('/api/questions', async (req, res) => {
     const { TEXT, TYPE } = req.body; 
     try {
-        await pool.execute('INSERT INTO questions (TEXT, TYPE) VALUES (?, ?)', [TEXT, TYPE]);
+        await pool.execute('INSERT INTO Questions (TEXT, TYPE) VALUES (?, ?)', [TEXT, TYPE]);
         res.status(201).json({ success: true });
     } catch (err) { 
         res.status(500).json({ success: false, message: err.message }); 
     }
 });
-
-app.get('/api/questions', async (req, res) => {
+app.delete('/api/users/:id', async (req, res) => {
     try {
-        const [rows] = await pool.execute('SELECT * FROM questions ORDER BY id ASC');
-        res.json(rows);
-    } catch (err) { 
-        res.status(500).json({ success: false, message: err.message }); 
+        await pool.execute('DELETE FROM Users WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
-
-app.get('/api/users', async (req, res) => {
-    try {
-        const [rows] = await pool.execute('SELECT * FROM users ORDER BY DATE DESC');
-        res.json(rows);
-    } catch (err) { 
-        res.status(500).json({ success: false, message: err.message }); 
-    }
-});
-
 app.delete('/api/questions/:id', async (req, res) => {
     try {
-        await pool.execute('DELETE FROM questions WHERE id = ?', [req.params.id]);
+        await pool.execute('DELETE FROM Questions WHERE id = ?', [req.params.id]);
         res.json({ success: true });
     } catch (err) { 
         res.status(500).json({ success: false, message: err.message }); 
